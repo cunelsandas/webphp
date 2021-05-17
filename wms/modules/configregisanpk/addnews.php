@@ -1,0 +1,188 @@
+<?php
+	$file_no=($gloActivity_fileno-1);   // กำหนด array จำนวน file ที่ต้องการ  $glo...มาจากไฟล์ connect.ini.php
+	$limitsize=$gloPicture_filesize;  //กำหนกขนาดไฟล์ที่ต้องการให้อัพโหลด หารด้วย 1000  1k
+	$SizeInMb=round(($limitsize/$onemb));
+	$table="web_activity";
+	$folder="homestyle";
+	$foldername="/fileupload/homestyle/";
+	$content="";
+	$spaw=new SpawEditor('spaw1' ,stripslashes($content),'en', 'all');
+?>
+  <link type="text/css" href="css/jquery-ui-1.8.10.custom.css" rel="stylesheet" />	
+  <!-- datepicker thai year -->
+ <script type="text/javascript" src="js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.8.10.offset.datepicker.min.js"></script>
+<style type="text/css">
+.ui-datepicker{
+	width:200px;
+	font-family:tahoma;
+	font-size:11px;
+	text-align:center;
+}
+</style>
+<script>
+	$(function () {
+		    var d = new Date();
+		     var toDay =(d.getFullYear() + 543)  + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+
+	  $("#txtdatestart").datepicker({ showOn: 'button', changeMonth: true, changeYear: true,dateFormat: 'yy-mm-dd', isBuddhist: true, defaultDate: toDay, dayNames: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'],
+              dayNamesMin: ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'],
+              monthNames: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
+              monthNamesShort: ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']});
+
+
+	 $("#txtdateend").datepicker({ showOn: 'button', changeMonth: true, changeYear: true,dateFormat: 'yy-mm-dd', isBuddhist: true, defaultDate: toDay, dayNames: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'],
+              dayNamesMin: ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'],
+              monthNames: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
+              monthNamesShort: ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']});
+
+	  $("#dateInput").datepicker({ showOn: 'button', changeMonth: true, changeYear: true,dateFormat: 'yy-mm-dd', isBuddhist: true, defaultDate: toDay, dayNames: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'],
+              dayNamesMin: ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'],
+              monthNames: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
+              monthNamesShort: ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']});
+	});
+</script>
+
+<?php
+$file=array();
+$size=array();
+$type=array();
+$images=array();
+if(isset($_POST['btadd'])){
+  // วนรับค่าจาก control
+	for ($i=0;$i<=$file_no;$i++){
+		$file[$i]=$_FILES['file'.$i]['name'];
+		$size[$i]=$_FILES['file'.$i]['size'];
+		$type[$i]=strtolower(substr($file[$i],-4));
+		$images[$i]=$_FILES['file'.$i]['tmp_name'];
+	}
+	//วนเช็ค file type
+	for ($i=0;$i<=$file_no;$i++){
+		$x=$i+1;
+		$strCheckFile=CheckFileUpload($file[$i],$size[$i],$limitsize,$SizeInMb,$x);
+		if($strCheckFile[0]=="no"){
+			echo $strCheckFile[1];
+			exit();
+		}
+	}
+	
+
+	if($_POST['active']=="on"){
+		$ac="1";
+	}else{
+		$ac="0";
+	}
+	$name=EscapeValue($_POST['txtname']);
+	$detail=$_POST['spaw1'];
+	$datepost=ChangeYear($_POST['dateInput'],"en");
+	$ip=$_SERVER['REMOTE_ADDR'];
+	$department=$_POST['cbodepartment'];
+	$img_filter=$_POST['cbofilter'];
+	$menuid =$_POST['tabmenu'];
+	$sql="INSERT INTO $table(name,detail,detail2,datepost,ip,status,menuid,department,img_filter) Values('$name','$detail','','$datepost','$ip','$ac',$menuid,'$department','$img_filter')";
+	$rs=rsQuery($sql);
+	if($rs){
+		$sql="Select * From $table Order by id DESC limit 0,1";
+		$rss=rsQuery($sql);
+		$r=mysqli_fetch_assoc($rss);
+		$id=$r['id'];
+		// loop insert ชื่อไฟล์และcopy ไฟล์
+		$newfile=array();
+		for ($i=0;$i<=$file_no;$i++){
+			$x=$i+1;
+			if($file[$i]<>""){
+				$newfile[$i]=$table.'_'.$id."_".$x.$type[$i];
+				
+				$chkimage=isImage($images[$i]);  // เช็คว่าเป็นไฟล์รูป ถ้าเป็น 
+					if($chkimage=="image"){  
+						$uploadimage=resizeimage($images[$i],$newfile[$i],$foldername,$domainname,'0','true');
+					}
+					if($chkimage=="no"){  //ถ้าไม่ใช่ไฟล์รูปให้copy
+						copy($images[$i],$_SERVER['DOCUMENT_ROOT'].$foldername.$newfile[$i]);  // สั่งให้ copy รูปจาก temp ไปยัง พาท ที่เราต้องการ
+					}
+
+				$filename="INSERT INTO filename(tablename,masterid,filename) Values('".$table."','".$id."','".$newfile[$i]."')";
+				$uppicname=rsQuery($filename);
+				}
+			}
+			// update table tb_trans บันทึกการเพิ่มข้อมูล
+		$updatetran=UpdateTrans($table,'add',$_SESSION['username'],'ID:'.$id);
+	
+		echo"<script>alert('บันทึกข้อมูลเรียบร้อย');window.location.href='main.php?_modid=".$modid."&_mod=".$_GET['_mod']."';</script>";
+	}
+}
+
+?>
+
+<form name="frmnews" method="POST" action="" enctype="multipart/form-data">
+<table class="content-input">
+<tr>
+	<td width="25%">ชื่อเรื่อง</td>
+	<td width="75%"><input type="text" size="70" class="txt" name="txtname" size="70"/></td>
+</tr>
+<tr>
+	<td >วันที่</td>
+	<td><input type="text" name="dateInput" id="dateInput" value="<?php echo ChangeYear(date("Y-m-d"),"th");?>" /></td>
+</tr>
+<tr>
+	<td >รายละเอียด</td>
+	<td><?php $spaw->show(); ?><!--<textarea name="detail1" class="txtarea"></textarea>--></td>
+</tr>
+<!--<tr>
+	<td >รายละเอียด2</td>
+	<td><textarea name="detail2" class="txtarea"></textarea></td>
+</tr>-->
+<tr>
+	<td width="25%">เมนูแสดง</td>
+	<td width="75%">
+		<select name="tabmenu">
+		<?php
+		$sql = "select * from tb_tabmenu";
+		$rs = rsQuery($sql);
+		if ($rs) {
+			while ($data = mysqli_fetch_array($rs)) {
+				echo '<option value="'.$data['id'].'">'.$data['menu'].'</option>';
+			}
+		}
+			
+		?>	
+		</select>
+	</td>
+</tr>
+<tr>
+	<td>image filter</td>
+	<td>
+		<select name="cbofilter">
+			<?php
+				$sqlfilter="select * from wms_filter";
+				$rsfilter=rsQuery($sqlfilter);
+				if($rsfilter){
+					while($filter=mysqli_fetch_assoc($rsfilter)){
+						echo "<option value='".$filter['name']."'>".$filter['name']."</option>";
+					}
+				}
+			?>
+		</select>&nbsp;* ใส่ Effect ให้กับรูปภาพ
+</tr>
+<tr>
+	<td valign="top" >
+		<?php echo ShowAllowedFileUpload($gloUploadFileType);?>
+		ขนาดไม่เกิน <?php echo $SizeInMb;?> Mb</td>
+	<td><br>
+	<?php  //วนลูปสร้าง file control เพื่อรับไฟล์ที่จะทำการอัพโหลด
+		for ($i=0; $i<=$file_no;$i++){
+			echo "ไฟล์ที่&nbsp;".($i+1). '&nbsp;&nbsp;<input type=file name=file'.$i.' size=50 /><br />';
+		}
+	?>
+	</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td ><input type="checkbox" name="active" />&nbsp;Active</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td ><input class="bt" type="submit" name="btadd" value="เพิ่ม" /></td>
+</tr>
+</table>
+</form>

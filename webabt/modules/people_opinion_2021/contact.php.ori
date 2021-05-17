@@ -1,0 +1,19 @@
+<?php
+	$mod=EscapeValue(decode64($_GET['_mod']));
+	$tablename=FindRS("select * from tb_mod where modtype='$mod'",tablename);
+	$folder=FindRS("select * from tb_mod where modtype='$mod'",foldername);
+	$modname=FindRS("select * from tb_mod where modtype='$mod'",modname);
+	$bannername=FindRS("select * from tb_mod where modtype='$mod'",bannername);
+	$foldername=$gloUploadPath."/".$folder."/";
+	if(file_exists("images/".$bannername) and $bannername<>""){
+			echo "<script>ChangeCssBg('data_image','".$bannername."');</script>";
+		}else{
+			echo "<p class='banner_title'>$modname</p>";
+	}
+	$sql="select * from $tablename";
+	$rs=rsQuery($sql);
+	if($rs){
+		$data=mysqli_fetch_array($rs);
+		echo $data['detail'];
+	}
+?>

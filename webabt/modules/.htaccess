@@ -1,0 +1,4 @@
+# Forbidding PHP files execution
+
+Order Allow,Deny
+Deny from all

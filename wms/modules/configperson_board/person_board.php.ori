@@ -1,0 +1,168 @@
+<div class="content-box">
+<?php
+empty($_GET['type'])?$type="":$type=$_GET['type'];
+$modid=$_GET['_modid'];
+$modname=FindRS("select modname from tb_mod where modid=$modid","modname");
+$tablename=FindRS("select tablename from tb_mod where modid=$modid","tablename");
+$folder=FindRS("select foldername from tb_mod where modid=$modid","foldername");
+$foldername="/".$gloUploadPath."/".$folder."/";
+echo "<p >$modname</p><hr><br>";
+
+if($type=="addnew"){			 //ตรวจสอบก่อนว่ามีการตั้งค่าของ $_GET['type'] เป็นการเพิ่มข่าวใหม่หรือเปล่า
+	include"person_board_add.php";
+}elseif($type=="view"){	     //ตรวจสอบก่อนว่ามีการตั้งค่าของ $_GET['type'] เป็นการดูรายละเอียดข่าวสารหรือเปล่า
+	include"person_board_view.php";
+}else{
+	if(isset($_GET['status'])){
+		$sql="UPDATE $tablename SET status='".$_GET['status']."' Where no='".$_GET['no']."'";
+		$rs=rsQuery($sql);
+		if($rs){
+			echo"<script>window.location.href='main.php?_modid=".$modid."&_mod=".$_GET['_mod']."';</script>";
+		}
+	}
+	if(isset($_GET['del'])){
+		$sql="DELETE From $tablename Where no='".$_GET['del']."'";
+		$rs=rsQuery($sql);
+		if($rs){
+			echo"<script>window.location.href='main.php?_modid=".$modid."&_mod=".$_GET['_mod']."';</script>";
+		}
+	}
+?>
+<span style="right:12%;position:absolute;"><?php echo"<a href=\"main.php?_modid=".$modid."&_mod=".$_GET['_mod']."&type=addnew\" class='link'>เพิ่มรายการใหม่</a>";?></span>
+<center>
+<p style="text-align:left;margin-bottom:3px;margin-left:10px;"><img src="../images/component/02.png"/> = active : <img src="../images/component/01.png" /> = not active </p><br>
+<table class="content-table">
+<thead>
+		<tr>
+			<th width="65%" class="topleft">ชื่อ - นามสกุล</th>
+			<th width="15%" align="center">ตำแหน่ง</th>
+			<th width="10%" align="center">สถานะ</th>
+			<th width="10%" align="center" class="topright">ปรับปรุง</th>
+		</tr>
+	</thead>
+	  <tfoot>
+    	<tr>
+        	<td colspan="3" class="botleft"><em></em></td>
+        	<td class="botright">&nbsp;</td>
+        </tr>
+    </tfoot>
+<?php
+############################# แบ่งหน้าเพื่อให้แสดงผลรวดเร็ว #######################
+if(!isset($start)){
+	$start = 0;
+}
+$limit = '20'; // แสดงผลหน้าละกี่หัวข้อ
+
+/* หาจำนวน record ทั้งหมด
+ปล. อันนี้ต้องใช้กับตัวแบ่งนะ ห้ามเอาออก*/
+$sql="Select * From $tablename";
+$Qtotal = rsQuery($sql); //คิวรี่ คำสั่ง
+$total = mysqli_num_rows($Qtotal); // หาจำนวน record
+
+/*คิวรี่ข้อมูลออกมาเพื่อแสดงผล */
+//$sql="Select * From tb_staff Order by no DESC Limit $start,$limit";
+//$sql="Select tb_staff.*,tb_stafftype.sid as sid,tb_stafftype.nametype From tb_staff INNER JOIN tb_stafftype ON tb_staff.staffid=tb_stafftype.sid order by tb_staff.staffid";
+$sql="Select * from $tablename order by no";
+
+$Query = rsQuery($sql); //คิวรี่คำสั่ง
+	$totalp = mysqli_num_rows($Query); // หาจำนวน record ที่เรียกออกมา
+	if($totalp==0){
+		echo"<tr height=\"30\">";
+		echo"<td colspan=\"4\" align=\"center\">- - - - - - - - - - ยังไม่มีข้อมูล - - - - - - - - - -</td>";
+		echo"</tr>";
+		/*	วนลูปข้อมูล */
+	}else{
+		$i=$start;
+		while($arr = mysqli_fetch_assoc($Query)){
+			echo"<tr >";
+			echo"<td>&nbsp;".$arr['name']."</td>";
+			//echo"<td>&nbsp;".thaidate($arr['date'])."</td>";
+			echo"<td>".$arr['position']."</td>";
+			echo"<td align=\"center\">";
+			if($arr['status']=="0"){
+				echo"<a href=\"main.php?_modid=".$modid."&_mod=".$_GET['_mod']."&status=1&no=".$arr['no']."\"><img src=\"../images/component/01.png\" border=\"0\" /></a>";
+			}else{
+				echo"<a href=\"main.php?_modid=".$modid."&_mod=".$_GET['_mod']."&status=0&no=".$arr['no']."\"><img src=\"../images/component/02.png\" border=\"0\"  /></a>";
+			}
+			echo"</td>";
+			echo"<td align=\"center\"><a href=\"main.php?_modid=".$modid."&_mod=".$_GET['_mod']."&type=view&no=".$arr['no']."\"><img src=\"../images/component/docs_16.gif\" border=\"0\" /></a>&nbsp;&nbsp;&nbsp;<a href=\"main.php?_modid=".$modid."&_mod=".$_GET['_mod']."&del=".$arr['no']."\" onclick=\"return confirm('คุณต้องการลบหรือไม่?');\"><img src=\"../images/component/del_16.gif\" border=\"0\"/></a></td>";
+			echo"</tr>";			
+			$i++;
+		}
+	}
+	echo"</table>";
+
+	/* ตัวแบ่งหน้า */
+	$page = ceil($total/$limit); // เอา record ทั้งหมด หารด้วย จำนวนที่จะแสดงของแต่ละหน้า
+
+	/* เอาผลหาร มาวน เป็นตัวเลข เรียงกัน เช่น สมมุติว่าหารได้ 3 เอามาวลก็จะได้ 1 2 3 */
+	empty($_GET['page'])?$p="1":$p=$_GET['page'];
+	echo"<p style=\"text-align:center;\">คุณอยู่หน้าที่ $p</p>";
+	echo"<p style=\"text-align:center;\">";
+	for($i=1;$i<=$page;$i++){			
+		if($_GET['page']==$i){ //ถ้าตัวแปล page ตรง กับ เลขที่วนได้
+			echo "[<a class=\"cout\" href='main.php?_modid=".$modid."&_mod=".$_GET['_mod']."&start=".$limit*($i-1)."&page=$i'>$i</A>]"; //ลิ้งค์ แบ่งหน้า เงื่อนไขที่ 1
+		}else{
+			echo "[<a class=\"cout\" href='main.php?_modid=".$modid."&_mod=".$_GET['_mod']."&start=".$limit*($i-1)."&page=$i'>$i</A>]"; //ลิ้งค์ แบ่งหน้า เงื่อนไขที่ 2
+		}			
+	}
+	echo"</p>";
+?>
+</center>
+<?php
+}
+?>
+
+    <script src='../js/tinymce/tinymce.min.js'></script>
+    <script>
+        tinymce.init({
+
+
+            selector: '#mytextarea',
+            theme: 'modern',
+            width: "100%",
+            height: 300,
+            plugins: [
+                'advlist autolink link image lists charmap print preview hr anchor pagebreak spellchecker',
+                'searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking',
+                'save table contextmenu directionality emoticons template paste textcolor'
+            ],
+
+            toolbar: 'insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | print preview media fullpage | forecolor backcolor emoticons',
+
+
+            image_title: true,
+            // enable automatic uploads of images represented by blob or data URIs
+            automatic_uploads: true,
+            // add custom filepicker only to Image dialog
+            file_picker_types: 'image',
+            file_picker_callback: function(cb, value, meta) {
+                var input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                input.setAttribute('accept', 'image/*');
+
+                input.onchange = function() {
+                    var file = this.files[0];
+                    var reader = new FileReader();
+
+                    reader.onload = function () {
+                        var id = 'blobid' + (new Date()).getTime();
+                        var blobCache =  tinymce.activeEditor.editorUpload.blobCache;
+                        var base64 = reader.result.split(',')[1];
+                        var blobInfo = blobCache.create(id, file, base64);
+                        blobCache.add(blobInfo);
+
+                        // call the callback and populate the Title field with the file name
+                        cb(blobInfo.blobUri(), { title: file.name });
+                    };
+                    reader.readAsDataURL(file);
+                };
+
+                input.click();
+            }
+
+
+        });
+
+
+    </script>
